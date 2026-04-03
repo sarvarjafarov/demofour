@@ -1,5 +1,5 @@
 .DS_Store
-storyboard-video-agent/
-hype_reel_build/
-produce_hype_reel.py
-produce_hype_v2.py
+.env
+.venv/
+__pycache__/
+*.pyc
