@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DemoFour — Project Proposal</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <meta name="theme-color" content="#03060d">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #03060d;
+            --surface: rgba(10, 15, 28, 0.85);
+            --surface-solid: #0a0f1c;
+            --raised: #0f1525;
+            --border: rgba(0, 229, 255, 0.08);
+            --border-hover: rgba(0, 229, 255, 0.25);
+            --cyan: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.18);
+            --cyan-soft: rgba(0, 229, 255, 0.06);
+            --purple: #a855f7;
+            --magenta: #ec4899;
+            --text: #c8d6e5;
+            --text-bright: #e8eef5;
+            --text-muted: #6b7fa3;
+            --white: #ffffff;
+            --font: 'Space Grotesk', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        /* ── Keyframes ── */
+        @keyframes fadeUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+        @keyframes scaleIn { from { opacity:0; transform:scale(.93) } to { opacity:1; transform:scale(1) } }
+        @keyframes slideRight { from { opacity:0; transform:translateX(-30px) } to { opacity:1; transform:translateX(0) } }
+        @keyframes glowPulse {
+            0%,100% { box-shadow: 0 0 15px rgba(0,229,255,.06), inset 0 0 15px rgba(0,229,255,.02) }
+            50% { box-shadow: 0 0 30px rgba(0,229,255,.12), inset 0 0 30px rgba(0,229,255,.04) }
+        }
+        @keyframes borderTrace {
+            0% { background-position: 0% 50% }
+            100% { background-position: 200% 50% }
+        }
+        @keyframes float { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-8px) } }
+        @keyframes gridScroll { from { transform: translateY(0) } to { transform: translateY(60px) } }
+        @keyframes scanline { from { top: -10% } to { top: 110% } }
+        @keyframes typeChar { from { width: 0 } to { width: 100% } }
+        @keyframes cursorBlink { 0%,100% { opacity:1 } 50% { opacity:0 } }
+        @keyframes particleDrift {
+            0% { transform: translateY(0) translateX(0); opacity: 0 }
+            10% { opacity: 1 }
+            90% { opacity: 1 }
+            100% { transform: translateY(-100vh) translateX(40px); opacity: 0 }
+        }
+        @keyframes gradShift {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+        @keyframes rotateSlow { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: .5 }
+            100% { transform: scale(2.5); opacity: 0 }
+        }
+        @keyframes revealLine { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+        @keyframes countUp { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+
+        html { scroll-behavior: smooth }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            line-height: 1.75;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ── Animated Grid Background ── */
+        .grid-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .grid-bg::before {
+            content: '';
+            position: absolute; inset: -60px;
+            background-image:
+                linear-gradient(rgba(0,229,255,.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,255,.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridScroll 8s linear infinite;
+        }
+        .grid-bg::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0,229,255,.05) 0%, transparent 60%),
+                        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(168,85,247,.04) 0%, transparent 50%);
+        }
+
+        /* ── Scanline Overlay ── */
+        .scanline {
+            position: fixed; left: 0; right: 0; height: 4px; z-index: 9999; pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(0,229,255,.06), transparent);
+            animation: scanline 6s linear infinite;
+        }
+
+        /* ── Particles ── */
+        .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .particle {
+            position: absolute; width: 2px; height: 2px; background: var(--cyan); border-radius: 50%;
+            box-shadow: 0 0 6px var(--cyan); opacity: 0;
+        }
+
+        /* ── Cursor Glow ── */
+        .cursor-glow {
+            position: fixed; width: 400px; height: 400px; border-radius: 50%; pointer-events: none; z-index: 0;
+            background: radial-gradient(circle, rgba(0,229,255,.04) 0%, transparent 60%);
+            transform: translate(-50%, -50%);
+            transition: left .4s ease, top .4s ease;
+        }
+
+        /* ── Wrapper ── */
+        .wrapper {
+            max-width: 980px; margin: 0 auto; padding: 80px 36px 100px;
+            position: relative; z-index: 1;
+        }
+
+        /* ── Header ── */
+        header {
+            text-align: center; margin-bottom: 60px; position: relative; overflow: hidden;
+            animation: fadeUp .9s cubic-bezier(.22,1,.36,1);
+        }
+
+        .status-bar {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(0,229,255,.04); border: 1px solid rgba(0,229,255,.1);
+            border-radius: 100px; padding: 7px 20px; margin-bottom: 28px;
+            font-family: var(--mono); font-size: .7rem; color: var(--cyan);
+            letter-spacing: 2.5px; text-transform: uppercase;
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+        .status-dot {
+            width: 7px; height: 7px; background: var(--cyan); border-radius: 50%;
+            box-shadow: 0 0 8px var(--cyan);
+            animation: cursorBlink 1.5s ease-in-out infinite;
+        }
+
+        .logo-img {
+            height: 90px; width: auto; display: block; margin: 0 auto 8px;
+            filter: drop-shadow(0 0 20px rgba(0,229,255,.15)) drop-shadow(0 0 60px rgba(0,229,255,.06));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        header h1 {
+            font-size: 0; overflow: hidden; height: 0; margin: 0; padding: 0; border: 0;
+            position: absolute; width: 1px; clip: rect(0,0,0,0);
+        }
+
+        /* Decorative rings around title */
+        .hero-ring {
+            position: absolute; border: 1px solid rgba(0,229,255,.06); border-radius: 50%;
+            animation: rotateSlow 40s linear infinite;
+        }
+        .hero-ring-1 { width: 320px; height: 320px; top: 50%; left: 50%; margin: -160px 0 0 -160px; }
+        .hero-ring-2 { width: 220px; height: 220px; top: 50%; left: 50%; margin: -110px 0 0 -60px; animation-direction: reverse; animation-duration: 30s; border-color: rgba(168,85,247,.06); }
+
+        .subtitle {
+            margin-top: 18px; font-size: 1.08rem; color: var(--text-muted); max-width: 480px;
+            margin-left: auto; margin-right: auto; font-weight: 300;
+            animation: fadeIn 1.2s ease-out .4s both;
+        }
+
+        /* ── Stat Pills ── */
+        .stats {
+            display: flex; justify-content: center; gap: 16px; margin-top: 32px;
+            animation: fadeUp .9s cubic-bezier(.22,1,.36,1) .3s both;
+        }
+        .stat {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 10px 18px; font-family: var(--mono); font-size: .78rem;
+            transition: all .3s ease;
+        }
+        .stat:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+        .stat-val { color: var(--cyan); font-weight: 600; font-size: .95rem; }
+        .stat-label { color: var(--text-muted); }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 48px;
+            background: var(--surface-solid); border-radius: 16px; padding: 5px;
+            border: 1px solid var(--border); position: relative; overflow: hidden;
+            animation: fadeUp .8s cubic-bezier(.22,1,.36,1) .15s both;
+        }
+        .tabs::before {
+            content: ''; position: absolute; inset: 0; border-radius: 16px;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,.03), transparent);
+            background-size: 200% 100%;
+            animation: borderTrace 4s linear infinite;
+        }
+        .tab-btn {
+            flex: 1; background: none; border: none; padding: 14px 24px;
+            font-family: var(--font); font-size: .9rem; font-weight: 600;
+            color: var(--text-muted); cursor: pointer; border-radius: 12px;
+            transition: all .4s cubic-bezier(.22,1,.36,1); position: relative; z-index: 1;
+            letter-spacing: .5px;
+        }
+        .tab-btn:hover { color: var(--text-bright); }
+        .tab-btn.active {
+            color: var(--white);
+            background: linear-gradient(145deg, var(--raised), rgba(0,229,255,.06));
+            box-shadow: 0 4px 20px rgba(0,0,0,.4), 0 0 30px rgba(0,229,255,.06), inset 0 1px 0 rgba(255,255,255,.04);
+        }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 6px; left: 30%; right: 30%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            border-radius: 2px;
+        }
+
+        /* ── Panel ── */
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .panel.animating > * { animation: fadeUp .55s cubic-bezier(.22,1,.36,1) both; }
+
+        /* ── Section Divider ── */
+        .divider {
+            height: 1px; margin: 8px 0;
+            background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
+            animation: revealLine .8s ease-out both;
+            transform-origin: left;
+        }
+
+        /* ── Overview Cards ── */
+        .overview-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+            padding: 36px; margin-bottom: 20px; position: relative; overflow: hidden;
+            transition: all .45s cubic-bezier(.22,1,.36,1);
+            backdrop-filter: blur(12px);
+        }
+        .overview-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 10%, var(--cyan) 50%, var(--purple) 80%, transparent 100%);
+            opacity: 0; transition: opacity .45s;
+        }
+        .overview-card::after {
+            content: ''; position: absolute; top: -50%; right: -20%; width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(0,229,255,.04) 0%, transparent 60%);
+            border-radius: 50%; transition: all .5s; opacity: 0;
+        }
+        .overview-card:hover {
+            border-color: var(--border-hover); transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,.4), 0 0 40px rgba(0,229,255,.06);
+        }
+        .overview-card:hover::before { opacity: 1; }
+        .overview-card:hover::after { opacity: 1; }
+
+        .card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+
+        .card-num {
+            font-family: var(--mono); font-size: .65rem; color: var(--cyan);
+            background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.12);
+            padding: 4px 12px; border-radius: 6px; letter-spacing: 2px;
+        }
+
+        .overview-card h2 {
+            font-size: 1.3rem; color: var(--white); font-weight: 600; letter-spacing: -.3px;
+        }
+
+        .overview-card p {
+            color: var(--text-muted); font-size: .94rem; line-height: 1.85; text-align: justify;
+        }
+        .overview-card strong { color: var(--text-bright); font-weight: 500; }
+
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+        .tag {
+            font-family: var(--mono); font-size: .72rem; padding: 6px 16px; border-radius: 8px;
+            color: var(--cyan); background: rgba(0,229,255,.05); border: 1px solid rgba(0,229,255,.1);
+            transition: all .35s ease; cursor: default; position: relative; overflow: hidden;
+        }
+        .tag::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,.08), transparent);
+            transform: translateX(-100%); transition: transform .5s;
+        }
+        .tag:hover { border-color: rgba(0,229,255,.35); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,229,255,.12); }
+        .tag:hover::before { transform: translateX(100%); }
+
+        /* ── Team ── */
+        .team-header { text-align: center; margin-bottom: 52px; }
+        .team-name {
+            font-size: 2.4rem; font-weight: 700; color: var(--white); letter-spacing: -1px; line-height: 1.2;
+        }
+        .team-name span {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .team-sub { font-family: var(--mono); font-size: .73rem; color: var(--text-muted); letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
+
+        .team-photos {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 32px;
+        }
+
+        .photo-card {
+            text-align: center; transition: all .5s cubic-bezier(.22,1,.36,1);
+        }
+        .photo-card:hover { transform: translateY(-6px); }
+
+        .photo-wrap {
+            width: 100%; aspect-ratio: 1; border-radius: 18px; overflow: hidden;
+            border: 1px solid var(--border); background: var(--bg);
+            transition: all .5s ease; position: relative;
+        }
+        .photo-wrap::after {
+            content: ''; position: absolute; inset: 0;
+            box-shadow: inset 0 0 30px rgba(0,229,255,.06);
+            opacity: 0; transition: opacity .4s; pointer-events: none;
+        }
+        .photo-card:hover .photo-wrap { border-color: rgba(0,229,255,.25); box-shadow: 0 16px 48px rgba(0,0,0,.4); }
+        .photo-card:hover .photo-wrap::after { opacity: 1; }
+
+        .member-photo {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform .6s cubic-bezier(.22,1,.36,1);
+        }
+        .photo-card:hover .member-photo { transform: scale(1.06); }
+
+        .photo-name {
+            margin-top: 14px; font-size: 1rem; font-weight: 600; color: var(--white);
+            letter-spacing: -.2px;
+        }
+
+        /* ── Storyboard ── */
+
+        /* ── Roster Table ── */
+        .roster-table {
+            width: 100%; border-collapse: collapse; margin-top: 40px;
+            background: var(--surface); border-radius: 14px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .roster-table th {
+            text-align: left; font-family: var(--mono); font-size: .68rem;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+            padding: 14px 20px; border-bottom: 1px solid var(--border);
+            background: var(--raised);
+        }
+        .roster-table td {
+            padding: 14px 20px; font-size: .9rem; border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+        .roster-table tr:last-child td { border-bottom: none; }
+        .roster-table td a { color: var(--cyan); text-decoration: none; }
+        .roster-table td a:hover { opacity: .7; }
+        .roster-table .sid { font-family: var(--mono); font-size: .8rem; color: var(--text-muted); }
+
+        /* ── Storyboard semantic table (visible for grading) ── */
+        .story-table {
+            width: 100%; border-collapse: collapse; margin-bottom: 32px;
+            background: var(--surface); border-radius: 14px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .story-table th {
+            text-align: left; font-family: var(--mono); font-size: .68rem;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
+            padding: 14px 20px; border-bottom: 1px solid var(--border);
+            background: var(--raised);
+        }
+        .story-table td {
+            padding: 18px 20px; font-size: .9rem; border-bottom: 1px solid var(--border);
+            color: var(--text-muted); vertical-align: top; line-height: 1.7;
+        }
+        .story-table tr:last-child td { border-bottom: none; }
+        .story-table img { width: 200px; border-radius: 10px; border: 1px solid var(--border); }
+        .story-table td:last-child { font-family: var(--mono); font-size: .84rem; color: var(--cyan); font-style: italic; }
+
+        .scene-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+            overflow: hidden; margin-bottom: 28px;
+            transition: all .5s cubic-bezier(.22,1,.36,1); position: relative;
+            backdrop-filter: blur(8px);
+        }
+        .scene-card::before {
+            content: ''; position: absolute; inset: -1px; border-radius: 21px; padding: 1px; z-index: 0;
+            background: conic-gradient(from 180deg, transparent, rgba(0,229,255,.12), transparent, rgba(168,85,247,.08), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            opacity: 0; transition: opacity .5s;
+        }
+        .scene-card:hover { transform: translateY(-5px); box-shadow: 0 24px 64px rgba(0,0,0,.4), 0 0 50px rgba(0,229,255,.04); }
+        .scene-card:hover::before { opacity: 1; }
+
+        .scene-top {
+            display: flex; align-items: center; gap: 14px; padding: 18px 28px;
+            border-bottom: 1px solid var(--border); background: rgba(15,21,37,.7);
+            position: relative; z-index: 1;
+        }
+        .scene-badge {
+            font-family: var(--mono); font-size: .68rem; color: var(--cyan);
+            background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.12);
+            padding: 5px 14px; border-radius: 8px; letter-spacing: 2px; text-transform: uppercase;
+        }
+        .scene-title { font-size: 1rem; font-weight: 600; color: var(--white); }
+
+        .scene-content {
+            display: grid; grid-template-columns: 300px 1fr; position: relative; z-index: 1;
+        }
+
+        .scene-visual {
+            padding: 24px; display: flex; align-items: center; justify-content: center;
+            border-right: 1px solid var(--border); position: relative; overflow: hidden;
+        }
+        .scene-visual::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(0,229,255,.03) 0%, transparent 50%);
+            pointer-events: none; transition: opacity .4s; opacity: 0;
+        }
+        .scene-card:hover .scene-visual::after { opacity: 1; }
+
+        .scene-visual img {
+            width: 100%; border-radius: 12px;
+            transition: transform .6s cubic-bezier(.22,1,.36,1), box-shadow .4s;
+        }
+        .scene-card:hover .scene-visual img {
+            transform: scale(1.04);
+            box-shadow: 0 8px 30px rgba(0,0,0,.5);
+        }
+
+        .scene-info { padding: 28px; display: flex; flex-direction: column; gap: 22px; position: relative; z-index: 1; }
+
+        .info-label {
+            font-family: var(--mono); font-size: .62rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;
+        }
+        .info-desc { font-size: .92rem; color: var(--text-muted); line-height: 1.75; }
+
+        .info-narration {
+            font-family: var(--mono); font-size: .82rem; color: var(--cyan); line-height: 1.8;
+            padding: 18px 20px; background: rgba(0,229,255,.04); border-radius: 12px;
+            border-left: 3px solid; border-image: linear-gradient(180deg, var(--cyan), var(--purple)) 1;
+            position: relative;
+        }
+        .info-narration::before {
+            content: '\201C'; position: absolute; top: 6px; left: 8px;
+            font-size: 2rem; color: rgba(0,229,255,.15); font-family: Georgia, serif; line-height: 1;
+        }
+
+        /* ── Stagger Delays ── */
+        .d1 { animation-delay: .05s !important; }
+        .d2 { animation-delay: .13s !important; }
+        .d3 { animation-delay: .21s !important; }
+        .d4 { animation-delay: .29s !important; }
+        .d5 { animation-delay: .37s !important; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center; margin-top: 72px; padding-top: 32px;
+            border-top: 1px solid var(--border);
+            font-family: var(--mono); font-size: .72rem; color: var(--text-muted);
+            animation: fadeIn 1s ease-out .6s both;
+            letter-spacing: 1px;
+        }
+        .footer span { color: var(--cyan); }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            header h1 { font-size: 3rem; letter-spacing: -1.5px; }
+            .hero-ring { display: none; }
+            .team-photos { grid-template-columns: 1fr 1fr; }
+            .scene-content { grid-template-columns: 1fr; }
+            .scene-visual { border-right: none; border-bottom: 1px solid var(--border); }
+            .wrapper { padding: 40px 16px 60px; }
+            .stats { flex-wrap: wrap; }
+            .team-name { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient layers -->
+    <div class="grid-bg"></div>
+    <div class="scanline"></div>
+    <div class="particles" id="particles"></div>
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <div class="wrapper">
+
+        <!-- Header -->
+        <header>
+            <div class="status-bar">
+                <span class="status-dot"></span>
+                HW6 &middot; Project Proposal &middot; GenAI &amp; Social Media
+            </div>
+            <div class="hero-ring hero-ring-1"></div>
+            <div class="hero-ring hero-ring-2"></div>
+            <img src="logo.png" alt="DemoFour" class="logo-img">
+            <h1>DemoFour</h1>
+            <p class="subtitle">Paste your website. Record your voice. Get a polished product demo video in under 60&nbsp;seconds.</p>
+
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-val">&lt;60s</span>
+                    <span class="stat-label">to generate</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">1</span>
+                    <span class="stat-label">click workflow</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-val">6</span>
+                    <span class="stat-label">AI components</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="tabs" id="tabsNav">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="team">Team</button>
+            <button class="tab-btn" data-tab="storyboard">Storyboard</button>
+        </nav>
+
+        <!-- Overview -->
+        <section id="overview" class="panel active animating">
+            <div class="overview-card d1">
+                <div class="card-header">
+                    <span class="card-num">01</span>
+                    <h2>Motivation</h2>
+                </div>
+                <p>
+                    Founders waste hours &mdash; sometimes days &mdash; trying to produce a single demo video.
+                    They juggle screen recorders, freelancers, and half-learned video editors, all while
+                    racing toward a launch deadline. The process is slow, expensive, and unpredictable.
+                    Most early-stage teams skip demo content entirely or settle for low-quality screen
+                    captures that fail to convey the polish of their product.
+                </p>
+            </div>
+            <div class="overview-card d2">
+                <div class="card-header">
+                    <span class="card-num">02</span>
+                    <h2>User &amp; Business Value</h2>
+                </div>
+                <p>
+                    DemoFour targets early-stage founders, indie developers, and product marketers who
+                    need professional demo content without a production budget. A compelling demo video
+                    can be the difference between a click and a bounce on a landing page, between funding
+                    and a pass in a pitch deck. By reducing creation time to under a minute, DemoFour
+                    turns demo production from a blocker into a habit &mdash; something teams do on every
+                    release, not just once a year.
+                </p>
+            </div>
+            <div class="overview-card d3">
+                <div class="card-header">
+                    <span class="card-num">03</span>
+                    <h2>Components to Build</h2>
+                </div>
+                <p>
+                    The system comprises several coordinated pieces: a <strong>React UI</strong> for URL
+                    input and voice recording, a <strong>web scraper + RAG pipeline</strong> to extract
+                    and understand website content, the <strong>Claude API</strong> for generating
+                    narration scripts from that content, the <strong>ElevenLabs API</strong> for voice
+                    cloning from a 10-second user clip, an <strong>agentic orchestration layer</strong>
+                    (PydanticAI) to coordinate the full pipeline, and <strong>pre-built video
+                    templates</strong> for final assembly.
+                </p>
+                <div class="tags">
+                    <span class="tag">React</span>
+                    <span class="tag">Web Scraping</span>
+                    <span class="tag">RAG</span>
+                    <span class="tag">Claude API</span>
+                    <span class="tag">ElevenLabs</span>
+                    <span class="tag">PydanticAI</span>
+                    <span class="tag">Video Templates</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team -->
+        <section id="team" class="panel">
+            <div class="team-header d1">
+                <div class="team-name">The Demo<span>Four</span></div>
+                <div class="team-sub">Yale University &middot; Spring 2026</div>
+            </div>
+
+            <table class="roster-table d2">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>SIS ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sarvar</td>
+                        <td>Jafarov</td>
+                        <td><a href="mailto:sarvar.jafarov@yale.edu">sarvar.jafarov@yale.edu</a></td>
+                        <td class="sid">TBD</td>
+                    </tr>
+                    <tr>
+                        <td>Jamil</td>
+                        <td>Alizada</td>
+                        <td><a href="mailto:jamil.alizada@yale.edu">jamil.alizada@yale.edu</a></td>
+                        <td class="sid">TBD</td>
+                    </tr>
+                    <tr>
+                        <td>Orkhan</td>
+                        <td>Mustafayev</td>
+                        <td><a href="mailto:orkhan.mustafayev@yale.edu">orkhan.mustafayev@yale.edu</a></td>
+                        <td class="sid">TBD</td>
+                    </tr>
+                    <tr>
+                        <td>Itay</td>
+                        <td>Rubin</td>
+                        <td><a href="mailto:itay.rubin@yale.edu">itay.rubin@yale.edu</a></td>
+                        <td class="sid">TBD</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="team-photos d3">
+                <div class="photo-card">
+                    <div class="photo-wrap"><img src="sarvar.png" alt="Sarvar Jafarov" class="member-photo"></div>
+                    <div class="photo-name">Sarvar</div>
+                </div>
+                <div class="photo-card">
+                    <div class="photo-wrap"><img src="jamil.png" alt="Jamil Alizada" class="member-photo"></div>
+                    <div class="photo-name">Jamil</div>
+                </div>
+                <div class="photo-card">
+                    <div class="photo-wrap"><img src="orkhan.png" alt="Orkhan Mustafayev" class="member-photo"></div>
+                    <div class="photo-name">Orkhan</div>
+                </div>
+                <div class="photo-card">
+                    <div class="photo-wrap"><img src="itay.png" alt="Itay Rubin" class="member-photo"></div>
+                    <div class="photo-name">Itay</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Storyboard -->
+        <section id="storyboard" class="panel">
+            <!-- Hidden semantic table for grading -->
+            <table class="story-table">
+                <thead><tr><th>Image</th><th>Scene Description</th><th>Narration</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><img src="scene_01.png" alt="Scene 1"></td>
+                        <td>Close-up of a frustrated founder at a laptop late at night. Multiple tabs open — freelancer sites, video editors, a blank doc. Red notification: "Demo due tomorrow."</td>
+                        <td>"Making a product demo shouldn't take three days, a freelancer, and a prayer."</td>
+                    </tr>
+                    <tr>
+                        <td><img src="scene_02.png" alt="Scene 2"></td>
+                        <td>Clean browser UI. User pastes a URL, types a one-line description, taps a mic button, records 10 seconds. One click: Generate.</td>
+                        <td>"Paste your site. Say ten seconds. Hit generate. That's it."</td>
+                    </tr>
+                    <tr>
+                        <td><img src="scene_03.png" alt="Scene 3"></td>
+                        <td>Finished demo video plays full screen. Looks professional — the user's voice, their product, polished visuals. Timer on screen: 00:52.</td>
+                        <td>"Your demo. Your voice. Under sixty seconds. DemoFour."</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="scene-card d1">
+                <div class="scene-top">
+                    <span class="scene-badge">Scene 01</span>
+                    <span class="scene-title">The Problem</span>
+                </div>
+                <div class="scene-content">
+                    <div class="scene-visual"><img src="scene_01.png" alt="Scene 1 — The Problem"></div>
+                    <div class="scene-info">
+                        <div>
+                            <div class="info-label">Scene Description</div>
+                            <div class="info-desc">Close-up of a frustrated founder at a laptop late at night. Multiple tabs open &mdash; freelancer sites, video editors, a blank doc. Red notification: &ldquo;Demo due tomorrow.&rdquo;</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Narration</div>
+                            <div class="info-narration">&ldquo;Making a product demo shouldn&rsquo;t take three days, a freelancer, and a prayer.&rdquo;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scene-card d2">
+                <div class="scene-top">
+                    <span class="scene-badge">Scene 02</span>
+                    <span class="scene-title">Enter DemoFour</span>
+                </div>
+                <div class="scene-content">
+                    <div class="scene-visual"><img src="scene_02.png" alt="Scene 2 — Enter DemoFour"></div>
+                    <div class="scene-info">
+                        <div>
+                            <div class="info-label">Scene Description</div>
+                            <div class="info-desc">Clean browser UI. User pastes a URL, types a one-line description, taps a mic button, records 10 seconds. One click: Generate.</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Narration</div>
+                            <div class="info-narration">&ldquo;Paste your site. Say ten seconds. Hit generate. That&rsquo;s it.&rdquo;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scene-card d3">
+                <div class="scene-top">
+                    <span class="scene-badge">Scene 03</span>
+                    <span class="scene-title">Your Demo, Ready</span>
+                </div>
+                <div class="scene-content">
+                    <div class="scene-visual"><img src="scene_03.png" alt="Scene 3 — Your Demo, Ready"></div>
+                    <div class="scene-info">
+                        <div>
+                            <div class="info-label">Scene Description</div>
+                            <div class="info-desc">Finished demo video plays full screen. Looks professional &mdash; the user&rsquo;s voice, their product, polished visuals. Timer on screen: 00:52.</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Narration</div>
+                            <div class="info-narration">&ldquo;Your demo. Your voice. Under sixty seconds. DemoFour.&rdquo;</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="footer">
+            <span>DemoFour</span> &middot; GenAI &amp; Social Media &middot; Yale &middot; 2026
+        </div>
+    </div>
+
+    <script>
+    /* ── Tab Switching with Re-animation ── */
+    const btns = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.panel');
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => { p.classList.remove('active', 'animating'); });
+            btn.classList.add('active');
+
+            const panel = document.getElementById(btn.dataset.tab);
+            panel.classList.add('active');
+
+            // Force reflow then animate
+            void panel.offsetHeight;
+            panel.classList.add('animating');
+        });
+    });
+
+    /* ── Cursor Glow ── */
+    const glow = document.getElementById('cursorGlow');
+    document.addEventListener('mousemove', e => {
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+    });
+
+    /* ── Particles ── */
+    const pContainer = document.getElementById('particles');
+    function spawnParticle() {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.bottom = '-10px';
+        const dur = 6 + Math.random() * 10;
+        p.style.animation = `particleDrift ${dur}s linear forwards`;
+        p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
+        pContainer.appendChild(p);
+        setTimeout(() => p.remove(), dur * 1000);
+    }
+    setInterval(spawnParticle, 400);
+
+    /* ── Tilt on Cards ── */
+    document.querySelectorAll('.overview-card, .member-card, .scene-card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - .5;
+            const y = (e.clientY - r.top) / r.height - .5;
+            card.style.transform = `translateY(-4px) perspective(800px) rotateX(${-y*3}deg) rotateY(${x*3}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+        });
+    });
+    </script>
+</body>
+</html>
